@@ -116,6 +116,7 @@ public class AuthServiceImpl implements AuthService {
             User currentUser = SecurityUtils.getCurrentPrincipal().getUser();
 
             currentUser.setLoggedIn(false);
+            currentUser.setLastLogout(LocalDateTime.now());
             userRepository.save(currentUser);
 
             LogoutResponse response = new LogoutResponse();

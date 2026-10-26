@@ -1,0 +1,10 @@
+.btn-custom {
+    background-color: #635cf3 !important;
+    height: 38px;
+    transition: background-color 0.2s ease-in-out, transform 0.2s ease-in-out;
+}
+
+.btn-custom:hover{
+    background-color: #4e46f7 !important;
+    transform: scale(1.05);
+}

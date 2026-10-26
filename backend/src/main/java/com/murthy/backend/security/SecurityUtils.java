@@ -1,8 +1,10 @@
 package com.murthy.backend.security;
 
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 
+import java.util.Optional;
 import java.util.UUID;
 
 public class SecurityUtils {
@@ -13,5 +15,8 @@ public class SecurityUtils {
 
     public static UUID getCurrentUserId(){
         return getCurrentPrincipal().getUserId();
+    }
+    public static Optional<? extends GrantedAuthority> getRole(){
+        return getCurrentPrincipal().getAuthorities().stream().findFirst();
     }
 }

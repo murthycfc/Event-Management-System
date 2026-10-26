@@ -42,8 +42,8 @@ public class EventFacadeImpl implements EventFacade {
     }
 
     @Override
-    public List<AdminEventResponse> getAllEvents() {
-        return eventService.getAllEvents();
+    public Page<AdminEventResponse> getAllEvents(Pageable pageable) {
+        return eventService.getAllEvents(pageable);
     }
 
     @Override

@@ -103,8 +103,8 @@ export default function BookingConfirmation(){
                 <div className="col-md-7">
                     <div className="card">
                         <div className="row">
-                            <div className="col-4">
-                                <div className="p-2">
+                            <div className="col-12 col-md-4">
+                                <div className="p-2 text-center">
                                     {/* <img 
                                         src="/stand-up-comedy.jpg"
                                         alt="poster"
@@ -113,7 +113,7 @@ export default function BookingConfirmation(){
                                     <ImageComponent />
                                 </div>
                             </div>
-                            <div className="col-8">
+                            <div className="col-12 col-md-8">
                                 <div className="m-3 px-2">
                                     <h3>{bookingData.eventName}</h3>
                                     <div className="d-flex justify-content-between mt-4">
@@ -128,11 +128,11 @@ export default function BookingConfirmation(){
                                         </div>
                                     </div>
                                     <div className="d-flex gap-2 mt-3">
-                                        <MapPin size={20}/>
+                                        <MapPin size={24} className="mt-2"/>
                                         <div className="">
-                                            <p>{bookingData.venueName}</p>
-                                            <p>{bookingData?.addressResponse?.place}</p>
-                                            <p>{bookingData?.addressResponse?.city}, {bookingData?.addressResponse?.state}</p>
+                                            <span className="">{bookingData.venueName}</span>
+                                            <span>{bookingData?.addressResponse?.place}</span>
+                                            <span>{bookingData?.addressResponse?.city}, {bookingData?.addressResponse?.state}</span>
                                         </div>
                                     </div>
                                 </div>
@@ -173,11 +173,11 @@ export default function BookingConfirmation(){
 
                             <div className="d-flex flex-column justify-content-center m-3">
                                 <Button
-                                    className="btn text-white mb-3 mx-auto"
-                                    style={{backgroundColor:"#554EE2", width:"300px"}}
+                                    className="btn text-white mb-3 mx-auto btn-custom"
+                                    style={{ width:"300px"}}
                                     onClick={handlePay}
                                 >
-                                    Pay ₹{bookingData.totalAmount} 
+                                    Confirm Booking
                                 </Button>
 
                                 <Button

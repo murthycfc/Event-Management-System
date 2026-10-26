@@ -16,6 +16,7 @@ export default function ManageBookings() {
                     <div className="col-4">
                         <NavLink
                             to=""
+                            end
                             className="btn w-100 btn-outline-primary"
                         >
                             All Bookings
@@ -37,9 +38,6 @@ export default function ManageBookings() {
                             Cancelled
                         </NavLink>
                     </div>
-                    
-
-                    
 
                 </div>
             </div>

@@ -11,6 +11,7 @@ import java.util.UUID;
 @Setter
 public class CancelBookingResponse {
     private UUID bookingId;
+    private Long bookingNumber;
     private String eventName;
     private BigDecimal paidAmount;
     private int refundPercentage;

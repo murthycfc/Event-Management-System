@@ -21,57 +21,44 @@ export default function Events(){
         startingPrice: ""
     });
 
-    const [searchParams, setSearchParams] = useSearchParams();
-    const page = Number(searchParams.get("page")) || 0;
-    const size = Number(searchParams.get("size")) || 6;
+   const [page, setPage] = useState(0);
+    const [size] = useState(6);
 
     const [totalPages, setTotalPages] = useState(0);
 
     const categories = [
-        "Music Concert",
-        "Stand-up comedy show"
+        { value: "Music Concert", label: "Music Concert" },
+        { value: "Stand-up comedy show", label: "Stand-up comedy show" }
     ];
 
     const cities = [
-        "Hyderabad",
-        "Mumbai",
-        "Banglore",
-        "Chennai",
-        "Delhi"
-    ]
+        { value: "Hyderabad", label: "Hyderabad" },
+        { value: "Mumbai", label: "Mumbai" },
+        { value: "Banglore", label: "Banglore" },
+        { value: "Chennai", label: "Chennai" },
+        { value: "Delhi", label: "Delhi" }
+    ];
 
     const startingPrices = [
-        "500",
-        "1000",
-        "1500",
-        "2000"
-    ]
+        { value: "500", label: "₹500" },
+        { value: "1000", label: "₹1000" },
+        { value: "1500", label: "₹1500" },
+        { value: "2000", label: "₹2000" }
+    ];
     const navigate = useNavigate();
 
     const token = localStorage.getItem("token");
     const [error, setError] = useState();
-    useEffect(() => {
-        if (!searchParams.has("page") || !searchParams.has("size")) {
-            setSearchParams({
-                page: "0",
-                size: "6"
-            });
-        }
-    }, [searchParams, setSearchParams]);
 
     function nextPage() {
-        setSearchParams({
-            page: String(page + 1),
-            size: String(size)
-        });
+        if (page < totalPages - 1) {
+            setPage(prev => prev + 1);
+        }
     }
 
     function previousPage() {
         if (page > 0) {
-            setSearchParams({
-                page: String(page - 1),
-                size: String(size)
-            });
+            setPage(prev => prev - 1);
         }
     }
     useEffect(()=>{
@@ -79,6 +66,7 @@ export default function Events(){
             try {
                 if(!token){
                     navigate("/login")
+                    return;
                 }
                 setError("");
                 const data = await loadEvents(filters, page, size);
@@ -95,23 +83,26 @@ export default function Events(){
 
     
 
-    function handleChange(e){
-        const {id, value} = e.target;
-        setFilters({
-            ...filters,
-            [id] : value
-        })
+    function handleChange(name, value){
+        if(typeof name === "object"){
+            const {id,value} = name.target;
+            setFilters(prev => ({
+                ...prev,
+                [id] : value
+            }));
+            return;
+        }
+        setFilters(prev =>({
+            ...prev,
+            [name] : value
+        }))
     }
     
 
     async function applyFilters() {
-
         try {
             setError("");
-            setSearchParams({
-                page:"0",
-                size: String(size)
-            })
+            setPage(0);
             const data = await loadEvents(filters, 0, size);
             setEvents(data.content);
             setTotalPages(data.totalPages);
@@ -122,12 +113,11 @@ export default function Events(){
     }
     return(
         <div className="container">
-            <div className="row g-3">
+            <div className="row g-md-3  align-items-center">
                 <div className="col-12 col-md-6 col-lg-3">
                     <Input
-                        icon={<Search size={20} />}
                         type="text"
-                        placeholder="Search by event names"
+                        placeholder="Search by event names "
                         id="name"
                         value={filters.name}
                         onChange={handleChange}
@@ -148,9 +138,14 @@ export default function Events(){
                 <div className="col-12 col-md-6 col-lg-2">
                     <Select
                         id="category"
-                        initial="All Categories"
-                        value={filters.category}
-                        onChange={handleChange}
+                        placeholder="All Categories"
+                        isClearable
+                        value={
+                            categories.find(
+                                option => option.value === filters.category) || null
+                        }
+
+                        onChange={(selectedOption)=> handleChange("category", selectedOption?.value || "")}
                         options={categories}
                     />
                 </div>
@@ -158,9 +153,15 @@ export default function Events(){
                 <div className="col-12 col-md-6 col-lg-2">
                     <Select
                         id="city"
+                        placeholder="All Locations"
+                        isClearable
                         initial="All Locations"
-                        value={filters.city}
-                        onChange={handleChange}
+                        value={
+                            cities.find(option => option.value === filters.city) || null
+                        }
+                        onChange={(selectedOption) =>
+                            handleChange("city", selectedOption?.value || "")
+                        }
                         options={cities}
                     />
                 </div>
@@ -169,19 +170,29 @@ export default function Events(){
                     <Select
                         id="startingPrice"
                         initial="Any Price"
-                        value={filters.startingPrice}
-                        onChange={handleChange}
+                        placeholder="Any Price"
+                        isClearable
+                        value={
+                            startingPrices.find(
+                                option => option.value === filters.startingPrice) || null
+                        }
+                        onChange={(selectedOption) =>
+                            handleChange(
+                                "startingPrice",
+                                selectedOption?.value || ""
+                            )
+                        }
                         options={startingPrices}
                     />
                 </div>
 
-                <div className="col-12 col-md-6 col-lg-1 d-flex align-items-center">
+                <div className="col-12 col-md-6 col-lg-1 ">
                     <Button
-                        className="btn btn-primary w-100"
-                        style={{
-                            backgroundColor: "#554EE2",
-                            height: "35px"
-                        }}
+                        className="btn w-100 mt-1 btn-custom text-white"
+                        // style={{
+                        //     backgroundColor: "#554EE2",
+                        //     height: "38px"
+                        // }}
                         onClick={applyFilters}
                     >
                         Search
@@ -205,10 +216,10 @@ export default function Events(){
 
             <div className="d-flex justify-content-center align-items-center gap-3 mb-4">
                 <Button
-                    className="btn text-white"
-                    style={{
-                        backgroundColor:"#554EE2"
-                    }}
+                    className="btn text-white btn-custom"
+                    // style={{
+                    //     backgroundColor:"#554EE2"
+                    // }}
                     onClick={previousPage}
                     disabled={page === 0}
                 >
@@ -219,10 +230,10 @@ export default function Events(){
                 </span>
 
                 <Button
-                    className="btn text-white"
-                    style={{
-                        backgroundColor:"#554EE2 "
-                    }}
+                    className="btn text-white btn-custom"
+                    // style={{
+                    //     backgroundColor:"#554EE2 "
+                    // }}
                     onClick={nextPage}
                     disabled={totalPages === 0 || page >= totalPages-1}
                 >

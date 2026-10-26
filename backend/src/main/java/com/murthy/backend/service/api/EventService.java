@@ -17,7 +17,7 @@ public interface EventService {
     Page<EventResponse> getEvents(String name, String category, LocalDate date, String city, BigDecimal startingPrice, Pageable pageable);
     EventDetailsResponse getEventDetails(UUID eventId);
     EventSeatsResponse getEventSeats(UUID eventId);
-    List<AdminEventResponse> getAllEvents();
+    Page<AdminEventResponse> getAllEvents(Pageable pageable);
     AdminEventDetailsResponse getEventForEdit(String eventId);
     BaseResponseDTO updateEvent(String eventId, EventUpdateRequest request);
     BaseResponseDTO deleteEvent(String eventId);

@@ -10,7 +10,9 @@ import com.murthy.backend.repo.VenueSeatRepository;
 import com.murthy.backend.service.api.VenueService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Component;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 import java.util.UUID;
@@ -33,8 +35,8 @@ public class VenueFacadeImpl implements VenueFacade {
     }
 
     @Override
-    public List<VenueListResponse> getVenues(String name) {
-        return venueService.getVenues(name);
+    public Page<VenueListResponse> getVenues(String name, Pageable pageable) {
+        return venueService.getVenues(name, pageable);
     }
 
     @Override
@@ -88,5 +90,10 @@ public class VenueFacadeImpl implements VenueFacade {
             log.error("An error occurred in activateSeat {}", e.getMessage());
             throw e;
         }
+    }
+
+    @Override
+    public List<VenueOptionResponse> getVenueOptions() {
+        return venueService.getVenueOptions();
     }
 }

@@ -1,6 +1,9 @@
 package com.murthy.backend.repo;
 
+import com.murthy.backend.enums.BookingStatus;
 import com.murthy.backend.model.Booking;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -42,4 +45,19 @@ select count(*) from bookings where booking_status not in ('ABANDONED') and is_a
 select coalesce(sum(b.amount),0) - coalesce(sum(b.refunded_amount),0) from bookings b where b.booking_status in ('SUCCESSFUL', 'CANCELLED') and is_active=true
 """, nativeQuery = true)
     BigDecimal findTotalRevenue();
+
+    @Query(value = """
+select * from bookings where (
+                (:status is NULL AND booking_status in ('SUCCESSFUL', 'CANCELLED')) or booking_status = :status)
+            AND is_deleted = false
+            order BY created_at DESC
+            """,
+            countQuery = """
+            SELECT COUNT(*) FROM bookings WHERE (
+                (:status is NULL AND booking_status in ('SUCCESSFUL', 'CANCELLED')) or booking_status = :status)
+            AND is_deleted = false
+            """,
+            nativeQuery = true
+    )
+    Page<Booking> findBookings(@Param("status") String status, Pageable pageable);
 }

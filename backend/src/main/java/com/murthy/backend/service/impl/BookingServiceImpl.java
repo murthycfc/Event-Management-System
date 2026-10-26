@@ -4,6 +4,7 @@ import com.murthy.backend.dto.request.BookingRequest;
 import com.murthy.backend.dto.response.*;
 import com.murthy.backend.enums.BookingStatus;
 import com.murthy.backend.enums.EventSeatStatus;
+import com.murthy.backend.enums.Role;
 import com.murthy.backend.exception.DuplicatePaymentException;
 import com.murthy.backend.exception.ResourceNotFoundException;
 import com.murthy.backend.exception.SeatNotAvailableException;
@@ -17,10 +18,15 @@ import lombok.extern.slf4j.Slf4j;
 //import org.apache.coyote.BadRequestException;
 import org.jspecify.annotations.NonNull;
 import org.springframework.beans.BeanUtils;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Service;
 import com.murthy.backend.exception.BadRequestException;
 
+import java.awt.print.Book;
 import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.LocalDate;
@@ -314,7 +320,12 @@ public class BookingServiceImpl implements BookingService {
                         return new ResourceNotFoundException("Booking not found");
                     });
 
-            if(!booking.getUser().getId().equals(SecurityUtils.getCurrentUserId())){
+            boolean isAdmin = SecurityUtils.getRole()
+                    .map(GrantedAuthority::getAuthority)
+                    .map(role -> role.equals("ROLE_ADMIN")) // Replace with your exact Admin role string
+                    .orElse(false);
+
+            if(!booking.getUser().getId().equals(SecurityUtils.getCurrentUserId()) && !isAdmin){
                 log.error("{} can't access others bookings", SecurityUtils.getCurrentUserId());
                 throw new AccessDeniedException("You don't have access");
             }
@@ -376,9 +387,6 @@ public class BookingServiceImpl implements BookingService {
                 log.error("booking id {} already cancelled", bookingId);
                 throw new BadRequestException("This booking already cancelled");
             }
-
-            //
-
 
             Event event = booking.getBookingSeats().get(0).getEventSeat().getEvent();
             LocalDateTime eventDateTime = LocalDateTime.of(event.getDate(), event.getStartTime());
@@ -447,6 +455,73 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
+    public Page<AdminBookingsListResponse> getBookings(BookingStatus status, Pageable pageable) {
+        try {
+            Page<Booking> bookings = bookingRepository.findBookings(status !=null ? status.name() : null, pageable);
+            return bookings.map(booking -> {
+                BookingSeats bookingSeat = booking.getBookingSeats().get(0);
+                EventSeat eventSeat = bookingSeat.getEventSeat();
+                Event event = eventSeat.getEvent();
+                Venue venue = eventSeat.getVenueSeat().getVenue();
+                return new AdminBookingsListResponse(
+                        booking.getId(),
+                        booking.getBookingNumber(),
+                        event.getName(),
+                        venue.getName(),
+                        event.getDate(),
+                        event.getStartTime(),
+                        booking.getUser().getEmail(),
+                        booking.getBookingStatus()
+                );
+            });
+        } catch (Exception e) {
+            log.error("An unexpected error occurred in getBookings {}", e.getMessage());
+            throw new BadRequestException(e.getMessage());
+        }
+
+    }
+
+    @Override
+    public CancelBookingResponse cancelBookingByAdmin(Booking booking) {
+        try {
+
+            if(booking.getBookingStatus()!=BookingStatus.SUCCESSFUL){
+                log.error("Only Successful bookings can be cancelled by admin. {} can't be cancelled", booking.getId());
+                throw new BadRequestException("This booking can't be cancelled");
+            }
+            Event event = booking.getBookingSeats().get(0).getEventSeat().getEvent();
+
+            List<EventSeat> seatsToRelease = new ArrayList<>();
+            for(BookingSeats seat : booking.getBookingSeats()){
+                EventSeat eventSeat = seat.getEventSeat();
+                eventSeat.setEventSeatStatus(EventSeatStatus.AVAILABLE);
+                seatsToRelease.add(eventSeat);
+            }
+            eventSeatRepository.saveAll(seatsToRelease);
+
+            booking.setRefundedAmount(booking.getAmount());
+            booking.setCancellationFee(BigDecimal.ZERO);
+            booking.setBookingStatus(BookingStatus.CANCELLED);
+            bookingRepository.save(booking);
+
+            CancelBookingResponse response = new CancelBookingResponse();
+            response.setBookingId(booking.getId());
+            response.setBookingNumber(booking.getBookingNumber());
+            response.setEventName(event.getName());
+            response.setPaidAmount(booking.getAmount());
+            response.setRefundPercentage(100);
+            response.setRefundedAmount(booking.getAmount());
+            response.setBookingStatus(booking.getBookingStatus());
+
+            return response;
+        }
+        catch (Exception e) {
+            throw new BadRequestException(e.getMessage());
+        }
+
+    }
+
+    @Override
     public AdminDashboardResponse getDashboard(){
         long totalEvents = eventRepository.findEventsCount();
         long totalVenues = venueRepository.findVenuesCount();
@@ -461,6 +536,7 @@ public class BookingServiceImpl implements BookingService {
     }
 
 
+
     private @NonNull Long generateBookingNumber(){
         try {
             Optional<Long> lastBookingNumber = bookingRepository.getLatestBookingNumber();
@@ -472,4 +548,6 @@ public class BookingServiceImpl implements BookingService {
             throw new BadRequestException(e.getMessage());
         }
     }
+
+
 }

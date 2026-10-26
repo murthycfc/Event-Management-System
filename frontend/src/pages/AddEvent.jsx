@@ -3,7 +3,7 @@ import { useNavigate } from "react-router"
 import Input from "../components/Input";
 import TextArea from "../components/TextArea";
 import Select from "../components/Select";
-import { createEvent, getVenueDetails, getVenues } from "../api/admin";
+import { createEvent, getVenueDetails, getVenueOptions, getVenues } from "../api/admin";
 import Button from "../components/Button";
 
 export default function AddEvent(){
@@ -25,8 +25,13 @@ export default function AddEvent(){
     useEffect(()=>{
         async function fetchvenues() {
             try {
-                const data = await getVenues();
-                setVenues(data)
+                const data = await getVenueOptions();
+                const venueOptions = data.map(venue => ({
+                    value: venue.id,
+                    label: venue.name
+                }));
+
+                setVenues(venueOptions);
                 console.log(data);
             } catch (error) {
                 setError(error?.response?.data?.message || "Failed to fetch venues");
@@ -43,25 +48,35 @@ export default function AddEvent(){
         }));
     }
 
-    async function handleVenueChange(e){
-        const venueId = e.target.value;
-
+    async function handleVenueChange(selectedOption) {
+        const venueId = selectedOption?.value || "";
+        if (!venueId) {
+            setFormData(prev => ({
+                ...prev,
+                venueId: "",
+                eventSeatPrices: {}
+            }));
+            return;
+        }
         try {
             setError("");
-            const data = await getVenueDetails(venueId)
+            const data = await getVenueDetails(venueId);
+            console.log("Venue details:", data);
+            console.log("Sections:", data.sections);
             const eventSeatPrices = {};
-            data.sections.forEach(section =>{
-                eventSeatPrices[section]= {
+            data.sections.forEach(section => {
+                eventSeatPrices[section] = {
                     price: ""
-                }
+                };
             });
             setFormData(prev => ({
                 ...prev,
-                venueId: venueId,
-                eventSeatPrices: eventSeatPrices
+                venueId,
+                eventSeatPrices
             }));
         } catch (error) {
-            setError(error?.response?.data?.message ||
+            setError(
+                error?.response?.data?.message ||
                 "Failed to load venue details"
             );
         }
@@ -187,8 +202,13 @@ export default function AddEvent(){
                             <Select 
                                 label="Select Venue"
                                 id="venueId"
-                                initial="Select Venue"
-                                value={formData.venueId}
+                                placeholder="Select Venue"
+                                isClearable
+                                value={
+                                    venues.find(
+                                        option => option.value === formData.venueId
+                                    ) || null
+                                }
                                 onChange={handleVenueChange}
                                 options={venues}
                             />

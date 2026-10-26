@@ -119,21 +119,27 @@ export default function MyBookings(){
                         className="card shadow-sm rounded-3"
                         onClick={()=>{handleClick(booking.bookingId)}}
                     >
-                        <div className="card-body px-4 py-3">
+                        <div className="card-body px-2 py-3">
 
-                            <div className="d-flex justify-content-between align-items-center">
+                            <div className="d-flex justify-content-between align-items-center gap-4">
 
-                                <div className="d-flex gap-3">
+                                <div className="d-flex gap-2">
                                     <h5 className="fw-bold">
                                         {booking.eventName}
                                     </h5>
 
                                     {booking.bookingStatus ==="SUCCESSFUL" ? (
-                                        <span className="badge bg-success py-2">
+                                        <span 
+                                            className="badge bg-success py-2"
+                                            style={{height:"30px"}}
+                                        >
                                             {booking.bookingStatus}
                                         </span>
                                     ): (
-                                        <span className="badge bg-danger py-2">
+                                        <span 
+                                            className="badge bg-danger py-2"
+                                            style={{height:"30px"}}
+                                        >
                                             {booking.bookingStatus}
                                         </span>
                                     )}
@@ -145,7 +151,7 @@ export default function MyBookings(){
 
                             </div>
 
-                            <div className="d-flex flex-wrap gap-4 mt-2 text-muted">
+                            <div className="d-flex flex-column flex-md-row gap-2 gap-md-4 mt-2 text-muted">
 
                                 <span className="d-flex gap-1">
                                     <Calendar1 size={22} />
@@ -157,9 +163,12 @@ export default function MyBookings(){
                                     {booking.startTime}
                                 </span>
 
-                                <span className="d-flex gap-1">
-                                    <MapPin size={22}/>
-                                    {booking.venueName}, {booking.city}
+                                <span className="d-flex align-items-start gap-1">
+                                    <MapPin size={22} className="flex-shrink-0 mt-1"/>
+                                    <span className="flex-grow-1">
+                                        {booking.venueName}, {booking.city}
+                                    </span>
+                                    
                                 </span>
                             </div>
                         </div>

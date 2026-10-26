@@ -46,8 +46,8 @@ export default function EventCard({event}){
                     </div>
 
                     <Button
-                        className="btn text-white"
-                        style={{backgroundColor: "#554EE2"}}
+                        className="btn btn-custom text-white"
+                        // style={{backgroundColor: "#554EE2"}}
                         onClick={handleClick}
                     >
                         View Details

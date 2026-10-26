@@ -83,51 +83,60 @@ export default function BookingDetails(){
     return(
         <div className="container mt-4 ">
             <h3 className="mb-4">Booking Details</h3>
-            <div className="d-flex mb-4">
-                <div className="px-3">
+            <div className="d-flex flex-column flex-md-row mb-4">
+                <div className="px-3 text-center mb-4">
                     <img 
                         src="/stand-up-comedy.jpg"
                         alt="event image"
                         style={{height:"200px"}}
-                        className="rounded-3"
+                        className="rounded-3 "
                     />
                 </div>
                 <div className="mx-2">
-                    <h2>{bookingData?.eventName}</h2>
-                    <p>{bookingData?.bookingStatus}</p>
-                    <div className="d-flex gap-5">
+                    <div className="d-flex justify-content-between mb-4">
+                        <p className="mb-0 fw-semibold ">{bookingData?.eventName}</p>
+                        <span className={ ` badge ${bookingData?.bookingStatus==="SUCCESSFUL" ? "text-success bg-success-subtle": "text-danger bg-danger-subtle"}`}>{bookingData?.bookingStatus}</span>
+                    </div>
+                    
+                    <div className="d-flex flex-column flex-md-row gap-2 gap-md-5 mb-3">
                         <div className="d-flex gap-1">
-                            <Calendar />
+                            <Calendar size={22}/>
                             <p>{formatDate1(bookingData?.date)}</p>
                         </div>
 
                         <div className="d-flex gap-1 ">
-                            <Timer />
+                            <Timer size={22}/>
                             <p>{timeFormatter(bookingData?.startTime)} - {timeFormatter(bookingData?.endTime)}</p>
                         </div>
 
                         <div className="d-flex gap-1">
-                            <MapPin />
+                            <MapPin size={22}/>
                             <p>{bookingData?.venueName}</p>
                         </div>
                     </div>
-                    <div className="d-flex gap-2">
-                        <Building2Icon />
-                        <p>{bookingData?.addressResponse?.place},</p>
-                        <p>{bookingData?.addressResponse?.landmark},</p>
-                        <p>{bookingData?.addressResponse?.city},</p>
-                        <p>{bookingData?.addressResponse?.state},</p>
-                        <p>{bookingData?.addressResponse?.pinCode}.</p>
+                    <div className="d-flex align-items-start gap-2">
+                        <Building2Icon size={22}/>
+                        <div className="d-flex flex-column flex-lg-row">
+                            <p>{bookingData?.addressResponse?.place},</p>
+                            <div className="d-flex">
+                                <span>{bookingData?.addressResponse?.landmark}</span>{", "}
+                                <span>{bookingData?.addressResponse?.city}{" "}</span>{", "}
+                                <span>{bookingData?.addressResponse?.state}</span>{", "}
+                                <span>{bookingData?.addressResponse?.pinCode}.</span>
+                            </div>
+                            
+                        </div>
+                        
                     </div>
                 </div>
 
             </div>
             <div className="card">
                 <div className="d-flex align-items-center justify-content-around gap-4 mx-3">
-                    <div className="d-flex align-items-center gap-5">
+                    <div className="d-flex justify-content-start align-items-center gap-5">
                         <Ticket className="ms-3"/>
                         <div className="d-flex flex-column align-items-center">
-                            <p className="mt-2 mb-0">Seats</p>
+                            <p className="mt-2 mb-0">No.of Seats</p>
                             <p className="">{bookingData?.seatDetails.length} seats</p>
                         </div>
                     </div>

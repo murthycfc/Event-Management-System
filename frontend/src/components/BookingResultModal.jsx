@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router";
 import Button from "./Button";
-import { CheckCircle, CheckCircle2, XCircle } from "lucide-react";
+import { Building2, CheckCircle, CheckCircle2, XCircle } from "lucide-react";
 
 
 export default function BookingResultModal({modal, onClose}){
@@ -35,7 +35,7 @@ export default function BookingResultModal({modal, onClose}){
                             }}
                             className="btn btn-outline"
                         >
-                            X
+                            <XCircle />
                         </Button>
 
                     </div>
@@ -70,8 +70,8 @@ export default function BookingResultModal({modal, onClose}){
                             {isSuccess ? "Payment Successful!" : "Booking Cancelled"}
                         </h2>
                         { data?.bookingNumber && (
-                            <div className="d-flex gap-3 m-2">
-                                <p className="mt-0 fs-5">Booking no: </p>
+                            <div className="d-flex justify-content-center gap-3 mt-3">
+                                <p className="mt-0 fs-5">Booking Id: </p>
                                 <div className="text-primary fs-5 fw-bold mb-3">
                                  BKG - {data?.bookingNumber}
                             </div>
@@ -84,10 +84,14 @@ export default function BookingResultModal({modal, onClose}){
                         </div>
 
                         <div>
-                            <div className="d-flex gap-1">
-                                <p>{data?.addressResponse?.place}</p>
-                                <p>{data?.addressResponse?.landmark}</p>
-                                <p>{data?.addressResponse?.city}</p>
+                            <div className="d-flex align-items-center gap-3">
+                                <Building2 />
+                                <div>
+                                    <span>{data?.addressResponse?.place}{", "}</span>
+                                    <span>{data?.addressResponse?.landmark}{", "}</span>
+                                    <span>{data?.addressResponse?.city}</span>
+                                </div>
+                                
                             </div>
                         </div>
 

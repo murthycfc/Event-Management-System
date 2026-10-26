@@ -8,10 +8,14 @@ import com.murthy.backend.dto.request.EventUpdateRequest;
 import com.murthy.backend.dto.request.VenueRequest;
 import com.murthy.backend.dto.request.VenueUpdateRequest;
 import com.murthy.backend.dto.response.*;
+import com.murthy.backend.enums.BookingStatus;
 import com.murthy.backend.model.VenueSeat;
 import jakarta.validation.Valid;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -45,13 +49,20 @@ public class AdminController {
     }
 
     @GetMapping("/getVenues")
-    public ResponseEntity<List<VenueListResponse>> getVenues(@RequestParam(required = false) String name){
-        return ResponseEntity.ok(venueFacade.getVenues(name));
+    public ResponseEntity<Page<VenueListResponse>> getVenues(
+            @RequestParam(required = false) String name,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "4") int size){
+        Pageable pageable = PageRequest.of(page, size);
+        return ResponseEntity.ok(venueFacade.getVenues(name, pageable));
     }
 
     @GetMapping("/getAllEvents")
-    public ResponseEntity<List<AdminEventResponse>> getAllEvents(){
-        return ResponseEntity.ok(eventFacade.getAllEvents());
+    public ResponseEntity<Page<AdminEventResponse>> getAllEvents(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "8") int size){
+        Pageable pageable = PageRequest.of(page, size);
+        return ResponseEntity.ok(eventFacade.getAllEvents(pageable));
     }
 
     @GetMapping("/events/{eventId}")
@@ -103,5 +114,35 @@ public class AdminController {
     @PatchMapping("/venueSeat/{venueSeatId}/activate")
     public ResponseEntity<BaseResponseDTO> activateSeat(@PathVariable String venueSeatId){
         return ResponseEntity.ok(venueFacade.activateSeat(venueSeatId));
+    }
+
+    @GetMapping("/getBookings")
+    public ResponseEntity<Page<AdminBookingsListResponse>> getBookings(
+            @RequestParam(required = false) BookingStatus status,
+            @RequestParam(defaultValue = "0")   int page,
+            @RequestParam(defaultValue = "10") int size){
+
+        Pageable pageable = PageRequest.of(page, size);
+        return ResponseEntity.ok(bookingFacade.getBookings(status, pageable));
+    }
+
+    @GetMapping("/bookings/{bookingId}")
+    public ResponseEntity<BookingDetails> viewBooking(@PathVariable UUID bookingId){
+        return ResponseEntity.ok(bookingFacade.viewBooking(bookingId));
+    }
+
+    @PutMapping("/bookings/{bookingId}")
+    public ResponseEntity<CancelBookingResponse> cancelBookingByAdmin(@PathVariable String bookingId){
+        return ResponseEntity.ok(bookingFacade.cancelBookingByAdmin(bookingId));
+    }
+
+    @GetMapping("/venue/{venueId}/details")
+    public ResponseEntity<VenueResponse> getVenueDetails(@PathVariable UUID venueId){
+        return ResponseEntity.ok(venueFacade.getVenueDetails(venueId));
+    }
+
+    @GetMapping("/venues/options")
+    public ResponseEntity<List<VenueOptionResponse>> getVenueOptions(){
+        return ResponseEntity.ok(venueFacade.getVenueOptions());
     }
 }

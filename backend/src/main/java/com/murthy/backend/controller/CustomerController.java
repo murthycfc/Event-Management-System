@@ -26,10 +26,10 @@ public class CustomerController {
     private final EventFacade eventFacade;
     private final BookingFacade bookingFacade;
 
-    @GetMapping("/venue/{venueId}/details")
-    public ResponseEntity<VenueResponse> getVenueDetails(@PathVariable UUID venueId){
-        return ResponseEntity.ok(venueFacade.getVenueDetails(venueId));
-    }
+//    @GetMapping("/venue/{venueId}/details")
+//    public ResponseEntity<VenueResponse> getVenueDetails(@PathVariable UUID venueId){
+//        return ResponseEntity.ok(venueFacade.getVenueDetails(venueId));
+//    }
 
     @GetMapping("/events")
     public ResponseEntity<Page<EventResponse>> getEvents(

@@ -1,6 +1,8 @@
 package com.murthy.backend.repo;
 
 import com.murthy.backend.model.Venue;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -29,11 +31,20 @@ select count(*) from venues where is_active=1
 
     @Query(value = """
 select * from venues where is_active=1
-""", nativeQuery = true)
-    List<Venue> findAllVenues();
+""",
+            countQuery = "select count(*) from venues where is_active=true",
+            nativeQuery = true)
+    Page<Venue> findAllVenues(Pageable pageable);
 
     @Query(value = """
 select * from venues where is_active=1 and name like concat('%', :name, '%')
+""",
+            countQuery = "select count(*) from venues where is_active=true and name like concat('%', :name, '%')",
+            nativeQuery = true)
+    Page<Venue> findVenuesByName(@Param("name") String name, Pageable pageable);
+
+    @Query(value = """
+select * from venues where is_active=true and is_deleted=false;
 """, nativeQuery = true)
-    List<Venue> findVenuesByName(@Param("name") String name);
+    List<Venue> findVenues();
 }

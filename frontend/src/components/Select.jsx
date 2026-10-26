@@ -1,3 +1,4 @@
+import ReactSelect from "react-select";
 
 export default function Select({label, initial ,options=[], ...props}){
     return(
@@ -7,16 +8,19 @@ export default function Select({label, initial ,options=[], ...props}){
                 className="form-label"
             >{label}</label>
 
-            <select className="form-select" {...props}>
+            {/* <select className="form-select" {...props}>
                 <option value="">{initial}</option>
                 {options.map((option)=>(
                     <option key={option.id || option} value={option.id || option}>
                         {option.name || option}
                     </option>
                 ))}
-            </select>
+            </select> */}
 
-
+            <ReactSelect
+                options={options}
+                {...props}
+            />
         </div>
     )
 }

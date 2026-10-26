@@ -1,3 +1,4 @@
+import './index.css';
 import { createBrowserRouter, RouterProvider } from "react-router";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -22,6 +23,7 @@ import AdminEventDetails from "./pages/AdminEventDetails ";
 import AllBookings from "./pages/AllBookings";
 import CompletedBookings from "./pages/CompletedBookings";
 import CancelledBookings from "./pages/CancelledBookings";
+import ViewBooking from "./pages/ViewBooking";
 
 export default function App(){
 const router = createBrowserRouter([
@@ -112,9 +114,15 @@ const router = createBrowserRouter([
             element: <CancelledBookings />
           },
           
+          
         ]
 
-      }
+      },
+      {
+        path:"bookings/:bookingId",
+        element: <ViewBooking />
+      },
+
     ]
   },
   {

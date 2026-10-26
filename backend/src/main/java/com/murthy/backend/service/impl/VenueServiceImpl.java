@@ -15,8 +15,9 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
-
+import org.springframework.data.domain.Pageable;
 import java.util.*;
 
 @Service
@@ -31,10 +32,17 @@ public class VenueServiceImpl implements VenueService {
     @Override
     public BaseResponseDTO createVenue(VenueRequest venueRequest) {
         try {
-
             Set<Integer> rowNumbers = new HashSet<>();
+            Set<String> sectionNames = new HashSet<>();
             for(VenueSectionRequest sectionRequest : venueRequest.getSections()){
+                Set<String> rows = new HashSet<>();
+                if(!sectionNames.add(sectionRequest.getSection())){
+                    throw new BadRequestException("Section name already exists in this venue");
+                }
                 for(RowRequest rowRequest : sectionRequest.getRows()){
+                    if(!rows.add(String.valueOf(rowRequest.getRow()))){
+                        throw new BadRequestException("Row name already exists in this section");
+                    }
                     if(!rowNumbers.add(rowRequest.getRowNumber())){
                         log.error("Row {} already exists ", rowRequest.getRowNumber());
                         throw new BadRequestException("Row number "+ rowRequest.getRowNumber()+ "already exists");
@@ -96,20 +104,22 @@ public class VenueServiceImpl implements VenueService {
             Map<String, VenueSectionResponse> sectionMap = new LinkedHashMap<>();
 
             for(VenueSeat venueSeat : venue.getVenueSeats()){
-                String sectionName = venueSeat.getSection();
-                VenueSectionResponse sectionResponse = sectionMap.get(sectionName);
+                if(venueSeat.isActive()){
+                    String sectionName = venueSeat.getSection();
+                    VenueSectionResponse sectionResponse = sectionMap.get(sectionName);
 
-                if(sectionResponse == null){
-                    sectionResponse = new VenueSectionResponse();
-                    sectionResponse.setSection(sectionName);
-                    sectionResponse.setSeats(new ArrayList<>());
-                    sectionMap.put(sectionName, sectionResponse);
+                    if(sectionResponse == null){
+                        sectionResponse = new VenueSectionResponse();
+                        sectionResponse.setSection(sectionName);
+                        sectionResponse.setSeats(new ArrayList<>());
+                        sectionMap.put(sectionName, sectionResponse);
+                    }
 
+                    VenueSeatResponse venueSeatResponse = new VenueSeatResponse();
+                    BeanUtils.copyProperties(venueSeat, venueSeatResponse);
+                    sectionResponse.getSeats().add(venueSeatResponse);
                 }
 
-                VenueSeatResponse venueSeatResponse = new VenueSeatResponse();
-                BeanUtils.copyProperties(venueSeat, venueSeatResponse);
-                sectionResponse.getSeats().add(venueSeatResponse);
             }
             List<VenueSectionResponse> sections = new ArrayList<>(sectionMap.values());
             venueResponse.setSections(sections);
@@ -127,41 +137,38 @@ public class VenueServiceImpl implements VenueService {
 
 
     @Override
-    public List<VenueListResponse> getVenues(String name){
+    public Page<VenueListResponse> getVenues(String name, Pageable pageable){
 
         try {
-            List<Venue> venues = new ArrayList<>();
+            Page<Venue> venues;
             if(name==null || name.isBlank()){
-                venues = venueRepository.findAllVenues();
+                venues = venueRepository.findAllVenues(pageable);
             }
             else{
-                venues = venueRepository.findVenuesByName(name.trim());
+                venues = venueRepository.findVenuesByName(name.trim(), pageable);
             }
 
             if(venues.isEmpty()){
                 log.error("No venues are listed now");
                 throw new ResourceNotFoundException("No venues found");
             }
-            List<VenueListResponse> responses = new ArrayList<>();
-            for(Venue venue : venues){
+
+            return venues.map(venue -> {
                 VenueListResponse response = new VenueListResponse();
                 response.setId(venue.getId());
                 response.setName(venue.getName());
                 response.setCity(venue.getAddress().getCity());
                 response.setState(venue.getAddress().getState());
                 response.setTotalSeats((int) venue.getVenueSeats().stream().filter(VenueSeat::isActive).count());
-
-                Set<String> sections = new HashSet<>();
-                for(VenueSeat seat : venue.getVenueSeats()){
-                    if(seat.isActive()){
-                        sections.add(seat.getSection());
-                    }
-                }
-                response.setTotalSections(sections.size());
-                responses.add(response);
-            }
-
-            return responses;
+                long totalSections = venue.getVenueSeats()
+                        .stream()
+                        .filter(VenueSeat::isActive)
+                        .map(VenueSeat::getSection)
+                        .distinct()
+                        .count();
+                response.setTotalSections((int) totalSections);
+                return response;
+            });
         }
         catch (ResourceNotFoundException e){
             throw e;
@@ -367,6 +374,23 @@ public class VenueServiceImpl implements VenueService {
     }
 
     @Override
+    public List<VenueOptionResponse> getVenueOptions() {
+        try {
+            List<Venue> venues = venueRepository.findVenues();
+            List<VenueOptionResponse> responses = new ArrayList<>();
+            for(Venue venue : venues){
+                VenueOptionResponse response = new VenueOptionResponse();
+                BeanUtils.copyProperties(venue, response);
+                responses.add(response);
+            }
+            return responses;
+        } catch (Exception e) {
+            log.error("An unexpected error occurred in getVenueOptions {}", e.getMessage());
+            throw new BadRequestException(e.getMessage());
+        }
+    }
+
+    @Override
     @Transactional
     public BaseResponseDTO updateVenue(String venueId, VenueUpdateRequest request) {
         try {
@@ -403,7 +427,7 @@ public class VenueServiceImpl implements VenueService {
         }
         Set<String> existingSectionNames = new HashSet<>();
         for (VenueSeat seat : venue.getVenueSeats()) {
-            if (seat.isActive()) {
+            if (!seat.isDeleted()) {
                 existingSectionNames.add(seat.getSection());
             }
         }
@@ -425,7 +449,7 @@ public class VenueServiceImpl implements VenueService {
 
         Set<Integer> rowNumbers = new HashSet<>();
         for (VenueSeat seat : venue.getVenueSeats()) {
-            if (seat.isActive()) {
+            if (!seat.isDeleted()) {
                 rowNumbers.add(seat.getXCoordinate());
             }
         }
@@ -464,61 +488,69 @@ public class VenueServiceImpl implements VenueService {
 
         List<VenueSeat> existingSeats = venue.getVenueSeats()
                 .stream()
-                .filter(VenueSeat::isActive)
+                .filter(seat -> !seat.isDeleted())
                 .toList();
-
-        Map<UUID, VenueSeat> existingSeatMap = new HashMap<>();
-
-        for(VenueSeat seat : existingSeats){
-            existingSeatMap.put(seat.getId(), seat);
-        }
+//        Map<UUID, VenueSeat> existingSeatMap = new HashMap<>();
+//
+//        for(VenueSeat seat : existingSeats){
+//            existingSeatMap.put(seat.getId(), seat);
+//        }
 
         Set<String> occupiedCoordinates = new HashSet<>();
         for (VenueSeat seat : existingSeats){
             String coordinate = seat.getXCoordinate() + ":" + seat.getYCoordinate();
             occupiedCoordinates.add(coordinate);
         }
-
-        Set<UUID> requestedSeatIds = new HashSet<>();
-        Set<String> sectionNames = new HashSet<>();
+        for(VenueSectionUpdateRequest venueSectionUpdateRequest : requestedSections){
+            Set<String> seatNos = new HashSet<>();
+            for(VenueSeatUpdateRequest seatRequest : venueSectionUpdateRequest.getSeats()){
+                if(seatRequest.getId()==null){
+                    String coordinate = seatRequest.getXCoordinate() + ":" + seatRequest.getYCoordinate();
+                    if(!occupiedCoordinates.add(coordinate)){
+                        throw new BadRequestException("Requested coordinates already exists");
+                    }
+                }
+                if(!seatNos.add(seatRequest.getSeatNo())){
+                    throw new BadRequestException("A seat number already exists in this section");
+                }
+            }
+        }
 
         for(VenueSectionUpdateRequest sectionRequest : requestedSections){
             String sectionName = sectionRequest.getSection();
+//            if (sectionName == null || sectionName.isBlank()) {
+//                throw new BadRequestException("Section name cannot be empty");
+//            }
 
-            if (sectionName == null || sectionName.isBlank()) {
-                throw new BadRequestException("Section name cannot be empty");
-            }
+//            if(!sectionNames.add(sectionName)){
+//                throw new BadRequestException("Duplicate section: " + sectionName);
+//            }
 
-            if(!sectionNames.add(sectionName)){
-                throw new BadRequestException("Duplicate section: " + sectionName);
-            }
-
-            if(sectionRequest.getSeats()==null){
-                //exception
-                continue;
-            }
-
+//            if(sectionRequest.getSeats()==null){
+//                //exception
+//                continue;
+//            }
             for(VenueSeatUpdateRequest seatRequest : sectionRequest.getSeats()){
                 // Existing seat
-                if(seatRequest.getId()!=null){
-                    VenueSeat seat = existingSeatMap.get(seatRequest.getId());
-                    String coordinate =
-                            seatRequest.getXCoordinate() + ":" + seatRequest.getYCoordinate();
-
-                    if (seat == null) {
-                        throw new ResourceNotFoundException("Venue seat not found");
-                    }
-
-                    requestedSeatIds.add(seat.getId());
-
-                    seat.setSection(sectionName);
-                    seat.setRow(seatRequest.getRow());
-                    seat.setSeatNo(seatRequest.getSeatNo());
-                    seat.setXCoordinate(seatRequest.getXCoordinate());
-                    seat.setYCoordinate(seatRequest.getYCoordinate());
-                }
+//                if(seatRequest.getId()!=null){
+//                    VenueSeat seat = existingSeatMap.get(seatRequest.getId());
+//                    String coordinate =
+//                            seatRequest.getXCoordinate() + ":" + seatRequest.getYCoordinate();
+//
+//                    if (seat == null) {
+//                        throw new ResourceNotFoundException("Venue seat not found");
+//                    }
+//
+//                    requestedSeatIds.add(seat.getId());
+//
+//                    seat.setSection(sectionName);
+//                    seat.setRow(seatRequest.getRow());
+//                    seat.setSeatNo(seatRequest.getSeatNo());
+//                    seat.setXCoordinate(seatRequest.getXCoordinate());
+//                    seat.setYCoordinate(seatRequest.getYCoordinate());
+//                }
                 //new seat
-                else {
+                if(seatRequest.getId()==null){
                     VenueSeat newSeat = new VenueSeat();
                     newSeat.setVenue(venue);
                     newSeat.setSection(sectionName);
@@ -531,16 +563,15 @@ public class VenueServiceImpl implements VenueService {
                 }
             }
         }
-
         //soft delete
-        for(VenueSeat existingSeat : existingSeats){
-
-            if (!sectionNames.contains(existingSeat.getSection())) {
-                continue;
-            }
-            if(!requestedSeatIds.contains(existingSeat.getId())){
-                existingSeat.setActive(false);
-            }
-        }
+//        for(VenueSeat existingSeat : existingSeats){
+//
+//            if (!sectionNames.contains(existingSeat.getSection())) {
+//                continue;
+//            }
+//            if(!requestedSeatIds.contains(existingSeat.getId())){
+//                existingSeat.setActive(false);
+//            }
+//        }
     }
 }

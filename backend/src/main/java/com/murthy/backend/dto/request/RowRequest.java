@@ -14,6 +14,7 @@ public class RowRequest {
     @NotNull(message = "Row letter is required")
     private Row row;
 
+    @NotNull(message = "row number is required")
     @Positive(message = "Row number must be greater than 0")
     private Integer rowNumber;
 

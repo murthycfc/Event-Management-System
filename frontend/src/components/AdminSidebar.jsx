@@ -29,7 +29,8 @@ export default function AdminSidebar(){
         <aside 
             className="text-white flex-shrink-0"
             style={{
-                width: "220px",
+                width: "20vw",
+                minWidth: "150px",
                 backgroundColor: "#1E2433"
             }}
         >

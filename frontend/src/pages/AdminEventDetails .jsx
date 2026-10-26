@@ -4,6 +4,7 @@ import { getEventForEdit } from "../api/admin";
 import Button from "../components/Button";
 import { formatDate1 } from "../utils/dates/dateFormatter";
 import timeFormatter from "../utils/dates/timeFormatter";
+import { loadSeats } from "../api/customer";
 
 export default function AdminEventDetails() {
 
@@ -12,14 +13,18 @@ export default function AdminEventDetails() {
 
     const [event, setEvent] = useState(null);
     const [error, setError] = useState("");
+    const [seats, setSeats] = useState([]);
 
     useEffect(() => {
         async function fetchEvent() {
             try {
                 setError("");
                 const data = await getEventForEdit(eventId);
+                const eventSeats = await loadSeats(eventId);
                 setEvent(data);
+                setSeats(eventSeats.eventSeats);
                 console.log(data);
+                console.log(eventSeats);
             } catch (error) {
                 setError(
                     error?.response?.data?.message ||
@@ -47,6 +52,25 @@ export default function AdminEventDetails() {
             </div>
         );
     }
+
+    function getSeat(x,y){
+        return seats.find(
+            seat => 
+                seat.xCoordinate===x && 
+                seat.yCoordinate===y
+        );
+    }
+
+    const sections = [...new Set(seats.map(seat => seat.section))]
+    .map(section => ({
+        name: section,
+        minX: Math.min(
+            ...seats
+                .filter(seat => seat.section === section)
+                .map(seat => seat.xCoordinate)
+        )
+    }))
+    .sort((a, b) => a.minX - b.minX);
 
 
     return (
@@ -152,6 +176,7 @@ export default function AdminEventDetails() {
                 </div>
             </div>
 
+
             <div className="card border-0 shadow-sm mb-4">
                 <div className="card-body p-4">
                     <h5 className="fw-bold mb-4">
@@ -216,6 +241,95 @@ export default function AdminEventDetails() {
                         )}
 
                     </div>
+                </div>
+            </div>
+
+            <div className="card  border-0 shadow-sm mb-4">
+                <div className="card-body d-flex flex-column align-item-center p-4">
+
+                    {sections.map(section => {
+                        const sectionSeats = seats.filter(
+                            seat => seat.section === section.name
+                        );
+                        const sectionPrice = sectionSeats[0]?.price;
+                        const rows = [
+                            ...new Set(
+                                sectionSeats.map(
+                                    seat => seat.xCoordinate
+                                )
+                            )
+                        ].sort((a, b) => a - b);
+
+                        const columns = [
+                            ...new Set(
+                                sectionSeats.map(
+                                    seat => seat.yCoordinate
+                                )
+                            )
+                        ].sort((a, b) => a - b);
+
+                        return (
+                            <div
+                                key={section.name}
+                                className="mb-4 d-flex flex-column justify-content-center"
+                            >   
+                                <p className="text-center">₹{sectionPrice }{' '} {section.name}</p>
+                                <div>
+
+                                </div>
+                                
+                                    {rows.map(x => (
+                                        <div 
+                                            key={x}
+                                            className="d-flex align-items-center justify-content-center gap-2 mb-2"
+                                        >
+                                            {columns.map(y=> {
+                                                const seat = getSeat(x,y);
+
+                                                if(!seat){
+                                                    return (
+                                                        <div
+                                                            key={`${x}-${y}`}
+                                                            style={{width: "45px", height:"45px"}}
+                                                        >
+                                                        </div>
+                                                    )
+                                                }
+
+                                                let seatClass = "btn btn-sm ";
+                                                if(seat.eventSeatStatus === "BOOKED"){
+                                                    seatClass+= "btn-secondary";
+                                                }
+
+                                                else if(seat.eventSeatStatus === "PENDING"){
+                                                    seatClass+= "btn-warning";
+                                                }
+                                                else {
+                                                    seatClass+="btn-outline-primary"
+                                                }
+
+                                                return (
+                                                    <div
+                                                        key={seat.id}
+                                                        className={seatClass}
+                                                        style={{
+                                                            width: "45px",
+                                                            height: "45px",
+                                                            paddingTop: "10px"
+                                                        }}
+                                                    >
+                                                        {seat.seatNo}
+                                                    </div>
+                                                )
+                                            })}
+                                            
+                                        </div>
+
+                                    ))}
+
+                            </div>
+                        )
+                    })}
                 </div>
             </div>
         </div>

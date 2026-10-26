@@ -2,13 +2,18 @@ import { Link, useNavigate } from "react-router"
 import Button from "./Button";
 import { logout } from "../api/authApi";
 import { useState } from "react";
+import { Modal } from "react-bootstrap";
 export default function AdminHeader(){
 
     const [token, setToken] = useState(()=>localStorage.getItem("token")) ;
+    const [logoutModal, setLogoutModal] =useState(false)
 
     const navigate = useNavigate();
 
-    async function handleLogout() {
+    function handleLogout(){
+        setLogoutModal(true);
+    }
+    async function confirmLogout() {
         const data = await logout();
         localStorage.clear();
         setToken(null);
@@ -17,8 +22,8 @@ export default function AdminHeader(){
 
     return(
         <div 
-            className="navbar navbar-expand-lg flex-shrink-0 "
-            style={{backgroundColor: "#554EE2", height: "70px"}}
+            className="navbar flex-shrink-0 "
+            style={{backgroundImage: "linear-gradient(90deg, #6e6af1 0%, #554EE2 100%)", height: "70px"}}
         >
             <div className="container">
                 <Link
@@ -34,7 +39,7 @@ export default function AdminHeader(){
 
                 <span 
                     className="text-white fs-5">
-                    Event Management System
+                    EventPlus
                 </span>
 
                 <div className="ms-auto d-flex align-items-center gap-5">
@@ -63,6 +68,37 @@ export default function AdminHeader(){
                 
 
             </div>
+            <Modal
+                show={logoutModal}
+                onHide={()=>setLogoutModal(false)}
+                centered
+            >
+                <Modal.Header closeButton>
+                    <Modal.Title>
+                        Confirm Logout
+                    </Modal.Title>
+                </Modal.Header>
+                <Modal.Body>
+                    <p>Are you sure want to logout?</p>
+
+                </Modal.Body>
+                <Modal.Footer>
+                    <Button
+                        className="btn btn-secondary"
+                        onClick={()=>setLogoutModal(false)}
+                    >
+                        Close
+                    </Button>
+
+                    <Button
+                        className="btn btn-danger"
+                        onClick={confirmLogout}
+                    >
+                        Logout
+                    </Button>
+                </Modal.Footer>
+
+            </Modal>
         </div>
     )
 }

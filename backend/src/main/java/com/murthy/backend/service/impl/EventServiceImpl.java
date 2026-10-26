@@ -85,10 +85,10 @@ public class EventServiceImpl implements EventService {
     public Page<EventResponse> getEvents(String name, String category, LocalDate date, String city, BigDecimal startingPrice, Pageable pageable) {
         try {
             Page<Event> events = eventRepository.getEventsWithFilters(name, category, date, city, startingPrice,pageable);
-            if(events.isEmpty()){
-                log.error("Events not found the requested filters");
-                throw new ResourceNotFoundException("Events not found for the requested filters");
-            }
+//            if(events.isEmpty()){
+//                log.error("Events not found the requested filters");
+//                throw new ResourceNotFoundException("Events not found for the requested filters");
+//            }
             List<EventResponse> eventResponses = new ArrayList<>();
 
             for(Event event : events.getContent()){
@@ -204,20 +204,20 @@ public class EventServiceImpl implements EventService {
     }
 
     @Override
-    public List<AdminEventResponse> getAllEvents() {
+    public Page<AdminEventResponse> getAllEvents(Pageable pageable) {
         try {
-            List<Event> events = eventRepository.findAllEvents();
+            Page<Event> events = eventRepository.findAllEvents(pageable);
             if(events.isEmpty()){
                 log.error("Events not found");
                 throw new ResourceNotFoundException("No events found");
             }
-            List<AdminEventResponse> responses = new ArrayList<>();
-            for(Event event : events){
+            Page<AdminEventResponse> responses;
+            return events.map(event -> {
                 AdminEventResponse adminEventResponse = new AdminEventResponse();
                 BeanUtils.copyProperties(event, adminEventResponse);
-                responses.add(adminEventResponse);
-            }
-            return responses;
+                return adminEventResponse;
+            });
+
         } catch (Exception e) {
             log.error("An error occurred in getAllEvents method, {}", e.getMessage());
             throw new BadRequestException(e.getMessage());

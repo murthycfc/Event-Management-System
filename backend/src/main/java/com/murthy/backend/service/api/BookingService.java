@@ -2,6 +2,10 @@ package com.murthy.backend.service.api;
 
 import com.murthy.backend.dto.request.BookingRequest;
 import com.murthy.backend.dto.response.*;
+import com.murthy.backend.enums.BookingStatus;
+import com.murthy.backend.model.Booking;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 import java.util.UUID;
@@ -14,5 +18,7 @@ public interface BookingService {
     BookingDetails viewBooking(UUID bookingId);
     AdminDashboardResponse getDashboard();
     CancelBookingResponse cancel(UUID bookingId);
+    Page<AdminBookingsListResponse> getBookings(BookingStatus status, Pageable pageable);
+    CancelBookingResponse cancelBookingByAdmin(Booking booking);
 
 }

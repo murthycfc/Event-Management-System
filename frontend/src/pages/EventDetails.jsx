@@ -17,8 +17,11 @@ export default function EventDetails(){
         async function fetchEvent() {
             try {
                 const data = await loadEventDetails(eventId);
+                
                 setEvent(data);
+                setSeats(eventSeats);
                 console.log(data);
+                console.log(eventSeats);
             } catch (error) {
                 setError(error.response.data.message || "Failed to load event");
             }
@@ -79,16 +82,16 @@ export default function EventDetails(){
                                             <div className="d-flex">
                                                 <Calendar size={20} className="mt-3"/>
                                                 <div className="mx-4">
-                                                    <p className="mb-0">Date: </p>
-                                                    <p className=" fw-bold">{formatDate(event.date)}</p>
+                                                    {/* <p className="mb-0">Date: </p> */}
+                                                    <p className=" fw-semibold">{formatDate(event.date)}</p>
                                                 </div>
                                             </div>
                                             <div>
                                                 <div className="d-flex">
                                                      <Timer size={20} className="mt-3"/>
                                                      <div className="mx-4">
-                                                        <p className="mb-0">Time: </p>
-                                                        <p className="fw-bold">{timeFormatter(event.startTime)} - {timeFormatter(event.endTime)}</p>
+                                                        {/* <p className="mb-0">Time: </p> */}
+                                                        <p className="fw-semibold">{timeFormatter(event.startTime)} - {timeFormatter(event.endTime)}</p>
                                                      </div>
                                                 </div>
                                             </div>
@@ -96,8 +99,8 @@ export default function EventDetails(){
                                                 <div className="d-flex ms-2">
                                                     <MapPin size={20} className="mt-3"/>
                                                     <div className="mx-4">
-                                                        <p className="mb-0">Venue: </p>
-                                                        <p className="fw-bold">{event.venueName}</p>
+                                                        {/* <p className="mb-0">Venue: </p> */}
+                                                        <p className="fw-semibold">{event.venueName}</p>
                                                     </div>
                                                 </div>
                                             </div>
@@ -159,23 +162,11 @@ export default function EventDetails(){
                     <hr />
 
                     <div className="d-flex justify-content-end mx-5">
-                        {/* <div>
-                            <h5>Booking Period</h5>
-                            <p>
-                                <p className="text-muted">Booking ends: </p>
-                                <div className="d-flex mt-1 gap-2">
-                                    <Timer size={20} className=""/>
-                                    {formatDate1(event.bookingEndDate)} at {timeFormatter(event.bookingEndTime)}
-                                </div>
-                            </p>
-                        </div> */}
-
                         <div className="mt-2">
                             <Button 
                                 onClick={handleClick}
-                                className="btn text-white me-1"
-                                style={{backgroundColor: "#554EE2"}}
-
+                                className="btn text-white me-1 btn-custom"
+                                // style={{backgroundColor: "#554EE2"}}
                             >
                                 Book Tickets
                             </Button>

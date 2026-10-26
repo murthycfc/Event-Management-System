@@ -6,8 +6,15 @@ import Button from "../components/Button";
 import Input from "../components/Input";
 import Select from "../components/Select";
 import {activate, deactivate, getVenueForEdit, updateVenue} from "../api/admin";
+// import Select from "react-select";
 
-const rowOptions = ["A", "B", "C", "D"];
+
+const rowOptions = [
+    { value: "A", label: "A" },
+    { value: "B", label: "B" },
+    { value: "C", label: "C" },
+    { value: "D", label: "D" }
+];
 
 
 export default function EditVenue() {
@@ -93,23 +100,47 @@ export default function EditVenue() {
     async function deactivateSeat(seatId) {
         try {
             setError("");
-            await deactivate(seatId);
-            console.log("Deactivate")
-            fetchVenue()
 
+            await deactivate(seatId);
+            setExistingSections(prev =>
+                prev.map(section => ({
+                    ...section,
+                    seats: section.seats.map(seat =>
+                        seat.id === seatId
+                            ? { ...seat, active: false }
+                            : seat
+                    )
+                }))
+            );
         } catch (error) {
-            setError(error?.response?.data?.message)
+            setError(
+                error?.response?.data?.message || "Failed to deactivate seat"
+            );
         }
     }
 
     async function activateSeat(seatId) {
         try {
             setError("");
+
             await activate(seatId);
-            console.log("Activate")
-            fetchVenue();
+
+            setExistingSections(prev =>
+                prev.map(section => ({
+                    ...section,
+                    seats: section.seats.map(seat =>
+                        seat.id === seatId
+                            ? { ...seat, active: true }
+                            : seat
+                    )
+                }))
+            );
+
         } catch (error) {
-            setError(error?.response?.data?.message)
+            setError(
+                error?.response?.data?.message ||
+                "Failed to activate seat"
+            );
         }
     }
 
@@ -141,10 +172,10 @@ export default function EditVenue() {
                     ...updated[sectionIndex].seats,
                     {
                         id: null,
-                        row: "A",
+                        row: "",
                         seatNo: "",
-                        xCoordinate: 0,
-                        yCoordinate: 0
+                        xCoordinate: "",
+                        yCoordinate: ""
                     }
                 ]
             };
@@ -172,9 +203,9 @@ export default function EditVenue() {
                 section: "",
                 rows: [
                     {
-                        row: "A",
+                        row: "",
                         rowNumber: "",
-                        rowCount: 1
+                        rowCount: ""
                     }
                 ]
             }
@@ -217,7 +248,7 @@ export default function EditVenue() {
                 rows: [
                     ...updated[sectionIndex].rows,
                     {
-                        row: "A",
+                        row: "",
                         rowNumber: "",
                         rowCount: 1
                     }
@@ -302,11 +333,7 @@ export default function EditVenue() {
                     Back
                 </Button>
             </div>
-            {error && (
-                <div className="alert alert-danger">
-                    {error}
-                </div>
-            )}
+            
 
             <form onSubmit={handleSubmit}>
                 <div className="card border-0 shadow-sm mb-4">
@@ -425,7 +452,7 @@ export default function EditVenue() {
                                         </Button>
                                     </div>
 
-                                    <div className="table-responsive">
+                                    <div className="">
                                         <table className="table align-middle mb-0">
                                             <thead>
                                                 <tr>
@@ -449,17 +476,21 @@ export default function EditVenue() {
                                                             <td style={{ minWidth: "120px" }}>
                                                                 {isExisting ? (<span>{seat.row}</span>): (
                                                                     <Select
-                                                                    value={seat.row}
-                                                                    onChange={(e) =>
-                                                                        handleSeatChange(
-                                                                            sectionIndex,
-                                                                            seatIndex,
-                                                                            "row",
-                                                                            e.target.value
-                                                                        )
-                                                                    }
-                                                                    options={rowOptions}
-                                                                />
+                                                                        isClearable
+                                                                        placeholder=""
+                                                                        value={rowOptions.find(
+                                                                            option => option.value=== seat.row) || null
+                                                                        }
+                                                                        onChange={(selectedOption) =>
+                                                                            handleSeatChange(
+                                                                                sectionIndex,
+                                                                                seatIndex,
+                                                                                "row",
+                                                                                selectedOption?.value || ""
+                                                                            )
+                                                                        }
+                                                                        options={rowOptions}
+                                                                    />
                                                                 )}
                                                             </td>
 
@@ -467,6 +498,7 @@ export default function EditVenue() {
                                                                 {isExisting ? (<span>{seat.seatNo}</span>) : (
                                                                     <Input
                                                                     value={seat.seatNo}
+                                                                    placeholder="Enter seat number"
                                                                     onChange={(e) =>
                                                                         handleSeatChange(
                                                                             sectionIndex,
@@ -483,6 +515,7 @@ export default function EditVenue() {
                                                                 {isExisting ? (<span>{seat.xCoordinate}</span>) : (
                                                                     <Input
                                                                         type="number"
+                                                                        placeholder="Enter x coordinate"
                                                                         value={seat.xCoordinate}
                                                                         onChange={(e) =>
                                                                             handleSeatChange(
@@ -504,6 +537,7 @@ export default function EditVenue() {
                                                                     <Input
                                                                     type="number"
                                                                     value={seat.yCoordinate}
+                                                                    placeholder="Enter x coordinate"
                                                                     onChange={(e) =>
                                                                         handleSeatChange(
                                                                             sectionIndex,
@@ -534,7 +568,7 @@ export default function EditVenue() {
                                                                 ) : (
                                                                     <Button
                                                                     type="button"
-                                                                    className="btn btn-sm btn-outline-danger"
+                                                                    className="btn btn-sm btn-outline-danger mt-1"
                                                                     onClick={() =>
                                                                         removeSeat(
                                                                             sectionIndex,
@@ -613,7 +647,7 @@ export default function EditVenue() {
                                                     e.target.value
                                                 )
                                             }
-                                            placeholder="Example: SILVER"
+                                            placeholder="SILVER"
                                         />
                                     </div>
 
@@ -642,13 +676,17 @@ export default function EditVenue() {
                                                 <div className="col-md-3">
                                                     <Select
                                                         label="Row"
-                                                        value={row.row}
-                                                        onChange={(e) =>
+                                                        isClearable
+                                                        placeholder="Select row"
+                                                        value={rowOptions.find(
+                                                            option => option.value === row.row) || null
+                                                        }
+                                                        onChange={(selectedOption) =>
                                                             handleNewRowChange(
                                                                 sectionIndex,
                                                                 rowIndex,
                                                                 "row",
-                                                                e.target.value
+                                                                selectedOption?.value || ""
                                                             )
                                                         }
                                                         options={rowOptions}
@@ -674,6 +712,7 @@ export default function EditVenue() {
                                                     <Input
                                                         label="Seats"
                                                         type="number"
+                                                        placeholder="Enter number of seats"
                                                         value={row.rowCount}
                                                         onChange={(e) =>
                                                             handleNewRowChange(
@@ -703,6 +742,11 @@ export default function EditVenue() {
                         )}
                     </div>
                 </div>
+                {error && (
+                    <div className="alert alert-danger">
+                        {error}
+                    </div>
+                )}
                 <div className="d-flex justify-content-end gap-2">
                     <Button
                         type="button"

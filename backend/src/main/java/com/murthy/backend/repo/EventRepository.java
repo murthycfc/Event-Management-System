@@ -62,6 +62,8 @@ select count(*) from events where is_active=1
 
     @Query(value = """
 select * from events where is_active=true
-""", nativeQuery = true)
-    List<Event> findAllEvents();
+""",
+            countQuery = "select count(*) from events where is_active=true",
+            nativeQuery = true)
+    Page<Event> findAllEvents(Pageable pageable);
 }

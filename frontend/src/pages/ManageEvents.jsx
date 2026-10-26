@@ -12,6 +12,9 @@ export default function ManageEvents() {
     const navigate = useNavigate();
 
     const [events, setEvents] = useState([]);
+    const [page, setPage] = useState(0);
+    const [totalPages, setTotalPages] = useState(0);
+    const [totalElements, setTotalElements] = useState(0);
     const [error, setError] = useState();
     const [activeMenu, setActiveMenu] = useState(null);
 
@@ -20,18 +23,20 @@ export default function ManageEvents() {
     const [deleteEventId, setDeleteEventId] = useState(null);
 
     useEffect(() => {
-        async function fetchEvents() {
+        async function fetchEvents(page) {
             try {
-                const data = await getAllEvents();
-                setEvents(data);
+                const data = await getAllEvents(page);
+                setEvents(data.content);
+                setTotalElements(data.totalElements)
+                setTotalPages(data.totalPages)
                 console.log(data)
             } catch (error) {
                 setError(error?.response?.data?.message || "Failed to load events");
             }
         }
 
-        fetchEvents();
-    }, []);
+        fetchEvents(page);
+    }, [page]);
 
     function handleView(eventId) {
         navigate(`/admin/events/${eventId}`);
@@ -101,6 +106,10 @@ export default function ManageEvents() {
                 </div>
             )}
 
+            <div className="text-end mb-2">
+                <span className="me-3">Total events: {totalElements}</span>
+            </div>
+
             <div
                 className="card border-0 shadow-sm p-1"
             >
@@ -162,10 +171,7 @@ export default function ManageEvents() {
                                             <td>
                                                 <div className="d-flex align-items-center gap-2">
 
-                                                    {/* <CalendarDays
-                                                        size={16}
-                                                        className="text-muted"
-                                                    /> */}
+
                                                     <div>
                                                         <div className="">
                                                             {formatDate1(event.date)}
@@ -282,6 +288,36 @@ export default function ManageEvents() {
                 </div>
 
             </div>
+
+            {totalPages > 1 && (
+                <div className="d-flex justify-content-between align-items-center p-3">
+
+                    <div className="text-muted small">
+                        Page {page + 1} of {totalPages}
+                    </div>
+
+                    <div className="d-flex gap-2">
+
+                        <Button
+                            className="btn btn-outline-secondary btn-sm"
+                            disabled={page === 0}
+                            onClick={() => setPage(prev => prev - 1)}
+                        >
+                            Previous
+                        </Button>
+
+                        <Button
+                            className="btn btn-outline-primary btn-sm"
+                            disabled={page === totalPages - 1}
+                            onClick={() => setPage(prev => prev + 1)}
+                        >
+                            Next
+                        </Button>
+
+                    </div>
+
+                </div>
+            )}
             {showDeleteModal && (
                 <div
                     className="modal d-block bg-dark bg-opacity-75"

@@ -202,18 +202,6 @@ export default function AddvenueModal({ onClose, onVenueCreated }) {
 
                     </div>
 
-
-                    {/* ERROR */}
-
-                    {error && (
-                        <div className="alert alert-danger mx-3 mt-3 mb-0">
-                            {error}
-                        </div>
-                    )}
-
-
-                    {/* BODY */}
-
                     <div className="modal-body">
 
                         {step === 1 && (
@@ -575,6 +563,11 @@ export default function AddvenueModal({ onClose, onVenueCreated }) {
 
                     </div>
 
+                    {error && (
+                        <div className="alert alert-danger mx-3 mt-3 mb-0">
+                            {error}
+                        </div>
+                    )}
 
                     {/* FOOTER */}
 

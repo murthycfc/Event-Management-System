@@ -10,7 +10,6 @@ export default function SeatSelection(){
     const {eventId} = useParams();
     console.log(eventId);
 
-
     const [seats, setSeats] = useState([]);
     const [selectedSeats, setSelectedSeats] = useState([]);
     const [error, setError] = useState("");
@@ -34,6 +33,7 @@ export default function SeatSelection(){
 
     function handleClick(seat){
 
+        setError("");
         if(seat.eventSeatStatus!=="AVAILABLE"){
             return;
         }
@@ -48,15 +48,6 @@ export default function SeatSelection(){
         console.log(selectedSeats);
     }
 
-    if(error){
-        return (
-            <div className="container mt-4">
-                <div className="alert alert-danger">
-                    {error}
-                </div>
-            </div>
-        )
-    }
 
     function getSeat(x,y){
         return seats.find(
@@ -66,9 +57,16 @@ export default function SeatSelection(){
         );
     }
 
-    const sections = [...new Set(
-        seats.map(seat => seat.section)
-    )];
+    const sections = [...new Set(seats.map(seat => seat.section))]
+    .map(section => ({
+        name: section,
+        minX: Math.min(
+            ...seats
+                .filter(seat => seat.section === section)
+                .map(seat => seat.xCoordinate)
+        )
+    }))
+    .sort((a, b) => a.minX - b.minX);
 
     const totalPrice = selectedSeats.reduce((total, seat)=>{
         return total+seat.price;
@@ -107,7 +105,7 @@ export default function SeatSelection(){
                     <div className="d-flex flex-column align-items-center">
                         {sections.map(section => {
                             const sectionSeats = seats.filter(
-                                seat => seat.section === section
+                                seat => seat.section === section.name
                             );
 
                             const sectionPrice = sectionSeats[0]?.price;
@@ -132,10 +130,10 @@ export default function SeatSelection(){
 
                             return (
                                 <div
-                                    key={section}
+                                    key={section.name}
                                     className="mb-4"
                                 >   
-                                    <p className="text-center">₹{sectionPrice }{' '} {section}</p>
+                                    <p className="text-center">₹{sectionPrice }{' '} {section.name}</p>
                                     <div>
 
                                     </div>
@@ -202,7 +200,15 @@ export default function SeatSelection(){
                                 </div>
                             )
                         })}
-                        <div className="d-flex justify-content-between align-items-center mt-4 gap-3">
+                        {error && (
+                            <div className="container mt-4 w-75">
+                                <div className="alert alert-danger">
+                                    {error}
+                                </div>
+                            </div>
+                        )}
+                        {selectedSeats.length>0 && (
+                            <div className="d-flex flex-column flex-md-row justify-content-between align-items-center mt-4 gap-3">
                             <div className="card border-0 shadow-sm">
                                 <div className="card-body px-4 py-3">
                                     <div className="d-flex align-items-center gap-4">
@@ -233,21 +239,19 @@ export default function SeatSelection(){
                                                 ₹{totalPrice}
                                             </span>
                                         </div>
-
                                     </div>
-
                                 </div>
                             </div>
                             <Button
-                                className="btn text-white px-4 py-2"
-                                style={{ backgroundColor: "#554EE2" }}
+                                className="btn text-white px-4 py-2 btn-custom mb-4"
+                                // style={{ backgroundColor: "#554EE2" }}
                                 onClick={handleContinue}
                             >
-                                Continue to Pay
+                                Proceed to Book
                             </Button>
 
                         </div>
-                        
+                        )}
                         
                     </div>
 
